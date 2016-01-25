@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from models import Product
+from models import Product, Order
 
 
 def cart_item(cart):
@@ -7,6 +7,15 @@ def cart_item(cart):
     for item in cart:
         items.append(Product.objects.get(id=item))
     return items
+
+
+def gen_items_list(cart):
+    cart_items = cart_item(cart)
+    item_list = ""
+    for item in cart_items:
+        item_list += str(item.name)
+        item_list += ","
+    return item_list
 
 
 def price_cart(cart):
@@ -54,3 +63,20 @@ def checkout(request):
     context = {'cart': cart, 'cart_size': len(cart),
                'total_price': price_cart(cart)}
     return render(request, "mystore/checkout.html", context)
+
+
+def complete_order(request):
+    request.session.set_expiry(0)
+    cart = request.session['cart']
+    order = Order()
+    order.first_name = request.POST['first_name']
+    order.last_name = request.POST['last_name']
+    order.address = request.POST['address']
+    order.city = request.POST['city']
+    order.payment_method = request.POST['payment']
+    order.payment_data = request.POST['payment_data']
+    order.items = gen_items_list(cart)
+    request.session['cart'] = []
+    return render(request, "mystore/complete_order.html", None)
+
+    
